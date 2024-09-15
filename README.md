@@ -1,4 +1,4 @@
-![diagram](./walls_garden_titan2.png)
+<img src="./walls_garden_titan2.png" width="300" height="300" alt='illustration'>
 
 # Strategies for uncertainty
 This repo includes materials to accompany the paper
