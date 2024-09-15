@@ -1,3 +1,5 @@
+![diagram](./walls_garden_titan2.png)
+
 # Strategies for uncertainty
 This repo includes materials to accompany the paper
 
