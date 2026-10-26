@@ -1,0 +1,20 @@
+[project]
+name = "rdot-advisor-mcp"
+version = "1.0.0"
+description = "MCP server exposing the RDOT strategy catalogue so AI coding agents can cite risk-reducing strategies"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "anthropic",  # only for the optional live-model test, skipped without ANTHROPIC_API_KEY
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
