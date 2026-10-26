@@ -7,15 +7,22 @@ enabling easier use across usage scenarios, e.g.
 - a human designing physical (non-software, e.g. structural, electrical etc) system submits the design to the MCP server
 
 ## Known limits
-- **Advisor is generic, not domain specific** - you are best to apply other techniques specific to your domain
-- **This server does no reasoning of its own and needs no model credentials.** The connecting client's model
-  reads the catalogue through these tools and writes the advice. "Recommend only RDOT strategies" is therefore
-  enforced by the server's `instructions` and tool descriptions alone: a host model can still ignore them.
-- **Search is lexical, not semantic.** `search_strategies` is BM25 over the catalogue text. On 34 labeled
-  issue queries it puts a fitting strategy in the top 10 for 23 of them. Engineers describe problems ("race
-  condition") while the catalogue describes strategies in abstract terms, and no score cutoff separates relevant
-  from irrelevant results ("write a poem about cats" outscores many real queries). That is why the instructions
-  send host models to `list_strategies` first; the catalogue is small enough to read whole.
+
+- **Not a substitute for domain expertise.** RDOT strategies are generic: they suggest *what kinds* of risk
+  reduction fit a design, not how to meet your field's safety standards or regulations. For safety-critical
+  systems, use its advice alongside domain-specific methods and qualified review.
+- **Advice quality depends on your AI client's model.** The server does no reasoning and needs no credentials;
+  your client's model reads the catalogue and writes the advice. "Recommend only RDOT strategies" is enforced
+  only by the server's instructions and tool descriptions, which a model can ignore, and some clients may not
+  pass the instructions to the model at all.
+- **Lightly evaluated.** Tested on ten synthetic enterprise-software architectures with one model (Claude Opus
+  4.6). Every planted problem was addressed with real catalogue strategies, but this is not a validation, and
+  physical-system designs have not been tested.
+- **Your design goes to your client's model provider.** The server makes no network requests and stores
+  nothing, but whatever you paste into your editor's chat is sent to the model your client uses.
+- **Keyword search can miss strategies.** `search_strategies` matches words, and problems are rarely described
+  in the catalogue's own terms. The server therefore has the model read the whole catalogue (`list_strategies`,
+  about 5K tokens) rather than rely on search.
 
 ## Setup
 
