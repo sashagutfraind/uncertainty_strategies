@@ -8,3 +8,9 @@ This repo includes materials to accompany the paper
 ## Materials
 - [Listing of RDOT strategies (csv file)](strategies_uncertainty_latest.csv)
 - [Risk management for AI solutions (slides PDF)](AI%20risk%20management%20with%20RDOT-%20PSAM%20talk%202023.pdf)
+
+## Tools
+- [RDOT Advisor MCP server](tools/rdot-advisor-mcp/): lets AI coding agents (VS Code, Kiro and other MCP clients) look up RDOT strategies and cite them when reviewing an architecture, system design or code.
+
+## License
+[MIT](LICENSE)
