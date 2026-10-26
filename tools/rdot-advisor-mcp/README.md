@@ -20,9 +20,9 @@ enabling easier use across usage scenarios, e.g.
   physical-system designs have not been tested.
 - **Your design goes to your client's model provider.** The server makes no network requests and stores
   nothing, but whatever you paste into your editor's chat is sent to the model your client uses.
-- **Keyword search can miss strategies.** `search_strategies` matches words, and problems are rarely described
-  in the catalogue's own terms. The server therefore has the model read the whole catalogue (`list_strategies`,
-  about 5K tokens) rather than rely on search.
+- **No search tool.** The model reads the whole catalogue (`list_strategies`, about 5K tokens of context) and
+  matches strategies to your design by meaning. Keyword search was tried and dropped: problems are rarely
+  described in the catalogue's own words, so it missed fitting strategies.
 
 ## Setup
 
@@ -102,9 +102,8 @@ applied to your design and cited by its catalogue name. Adding your goal ("reduc
 
 | Tool | Purpose |
 |---|---|
-| `list_strategies()` | The whole catalogue: every strategy's name, category and definition (about 5K tokens). The recommended first call, so the host model matches problems to strategies by meaning |
+| `list_strategies()` | The whole catalogue: every strategy's name, category and definition (about 5K tokens). The first call, so the model matches problems to strategies by meaning |
 | `get_strategy(name)` | One strategy's full entry (definition, category, examples, related/aliases, references) |
-| `search_strategies(query, limit=10)` | Keyword (BM25) shortcut with a relevance score per result; misses strategies described in different words than the query |
 | `catalogue_info()` | Which copy of the catalogue is loaded: the CSV file path, its SHA-256, load time and strategy count |
 
 ## Catalogue source
@@ -136,10 +135,8 @@ itself needs):
 ANTHROPIC_API_KEY=sk-... uv run pytest tests/
 ```
 
-`tests/fixtures.py` holds the three sample architectures (a payments microservice system, a healthcare data
-pipeline, an internal admin tool) used by both the deterministic and the LLM-in-the-loop tests.
-`tests/test_search_quality.py` measures search retrieval against labeled issue queries in
-`tests/answer_keys.py`, with a regression floor.
+`tests/fixtures.py` holds three sample architectures (a payments microservice system, a healthcare data
+pipeline, an internal admin tool) for the LLM-in-the-loop test.
 
 ## License
 

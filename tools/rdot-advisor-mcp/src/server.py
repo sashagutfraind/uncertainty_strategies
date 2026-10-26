@@ -19,7 +19,6 @@ When asked to advise on an architecture, system design or piece of code:
 1. Call `list_strategies` first. It returns the whole catalogue (about 110 entries, name and definition), small
    enough to read in full; match the architecture's problems to strategies by meaning, not by shared words.
 2. Call `get_strategy` for each strategy you plan to recommend, to read its examples before applying it.
-   `search_strategies` is a keyword shortcut; it misses strategies described in different words than your query.
 3. Recommend ONLY catalogue strategies, citing each by its exact `name`. Every recommendation must be an
    application of a named strategy to this architecture.
 4. Never add risk-management advice from general knowledge, even as a side note. If no strategy fits a problem,
@@ -66,21 +65,8 @@ def get_strategy(name: str) -> dict:
     Raises an error if no strategy matches closely - never guesses."""
     match = _get_catalogue().get(name)
     if match is None:
-        raise ValueError(f"No RDOT strategy matches '{name}'. Use search_strategies or list_strategies first.")
+        raise ValueError(f"No RDOT strategy matches '{name}'. Call list_strategies for the exact names.")
     return _as_dict(match)
-
-
-@mcp.tool
-def search_strategies(query: str, limit: int = 10) -> list[dict]:
-    """Search the RDOT catalogue for strategies relevant to a free-text query.
-
-    Keyword (BM25) search over names, definitions, examples and aliases, best match first, with a relevance
-    `score`. It only finds strategies that share words with the query, and a high score does not mean the
-    strategy fits: judge each result yourself. Prefer `list_strategies` when looking for everything that fits."""
-    return [
-        {**_as_dict(s), "score": round(score, 2)}
-        for s, score in _get_catalogue().search(query, limit=limit)
-    ]
 
 
 @mcp.tool

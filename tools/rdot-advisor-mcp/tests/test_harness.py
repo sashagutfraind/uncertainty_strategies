@@ -19,13 +19,10 @@ async def _call(tool_name: str, **kwargs) -> list | dict:
     return result.data
 
 
-@pytest.mark.parametrize("fixture", FIXTURES, ids=[f["name"] for f in FIXTURES])
-async def test_search_returns_catalogue_entries(fixture):
-    names = {s.name for s in server._get_catalogue().strategies}
-    results = await _call("search_strategies", query=fixture["goal"], limit=10)
-    assert results, f"no results for goal: {fixture['goal']}"
-    for entry in results:
-        assert entry["name"] in names
+async def test_exposes_exactly_the_documented_tools():
+    async with Client(server.mcp) as client:
+        names = {t.name for t in await client.list_tools()}
+    assert names == {"list_strategies", "get_strategy", "catalogue_info"}
 
 
 async def test_get_strategy_known_name():
@@ -40,9 +37,10 @@ async def test_get_strategy_unknown_name_raises():
         await _call("get_strategy", name="definitely not a real strategy name 12345")
 
 
-async def test_list_strategies_matches_catalogue_count():
+async def test_list_strategies_returns_whole_catalogue_with_definitions():
     listed = await _call("list_strategies")
     assert len(listed) == len(server._get_catalogue().strategies)
+    assert all(entry["name"] and entry["definition"] for entry in listed)
 
 
 async def test_catalogue_info_sane():
