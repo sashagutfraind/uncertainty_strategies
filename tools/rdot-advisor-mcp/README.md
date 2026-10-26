@@ -84,6 +84,20 @@ Add to `.kiro/settings/mcp.json` in your workspace, or `~/.kiro/settings/mcp.jso
 
 Kiro reconnects automatically when you save the file. Check Kiro's MCP Logs (Output tab) if it doesn't show up.
 
+## Example prompt
+
+Once the server is connected, ask your AI client in its chat (in VS Code, use Agent mode):
+
+```text
+Use the rdot-advisor MCP server to review the following design:
+I'm building a website that provides healthcare advice. Users enter their symptoms and it offers a diagnosis
+by calling an LLM.
+```
+
+The client's model reads the catalogue through the server's tools and replies with RDOT strategies, each
+applied to your design and cited by its catalogue name. Adding your goal ("reduce the risk of harmful advice",
+"protect patient data") focuses the review.
+
 ## Tools exposed
 
 | Tool | Purpose |
