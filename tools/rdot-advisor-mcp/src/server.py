@@ -87,8 +87,8 @@ def search_strategies(query: str, limit: int = 10) -> list[dict]:
 def catalogue_info() -> dict:
     """Report which copy of the RDOT catalogue this server loaded, for traceability of any advice given.
 
-    Includes the source (the CSV file in this repo, or a GitHub URL), when it was loaded, how many strategies it
-    holds, and whether a failed fetch fell back to a cached copy."""
+    Includes the local CSV file it read, that file's SHA-256, when it was loaded, and how many strategies it
+    holds."""
     return _get_catalogue().info()
 
 

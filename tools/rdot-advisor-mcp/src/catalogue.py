@@ -2,25 +2,19 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import math
 import os
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
-import httpx
-
-REPO = "sashagutfraind/uncertainty_strategies"
-CSV_PATH = "strategies_uncertainty_latest.csv"
-# The catalogue ships in the same repo, two levels above this tool (tools/rdot-advisor-mcp/).
-LOCAL_CSV = Path(__file__).resolve().parents[3] / CSV_PATH
-# Set RDOT_CSV_REF to a branch, tag or commit to fetch that version from GitHub instead of the local file.
-CSV_REF = os.environ.get("RDOT_CSV_REF")
-CSV_URL = f"https://raw.githubusercontent.com/{REPO}/{CSV_REF or 'main'}/{CSV_PATH}"
-
-CACHE_FILE = Path(__file__).resolve().parent.parent / ".cache" / "strategies.csv"
+# The catalogue ships in the same repo, two levels above this tool (tools/rdot-advisor-mcp/). The server never
+# downloads anything: RDOT_CSV_PATH can point at another local copy, e.g. when the tool is used outside the repo.
+REPO_CSV = Path(__file__).resolve().parents[3] / "strategies_uncertainty_latest.csv"
+CSV_FILE = Path(os.environ["RDOT_CSV_PATH"]).expanduser() if os.environ.get("RDOT_CSV_PATH") else REPO_CSV
 
 
 STOPWORDS = frozenset(
@@ -79,10 +73,9 @@ class Strategy:
 @dataclass
 class Catalogue:
     strategies: list[Strategy]
-    source: str  # the local file path or the GitHub URL the CSV was read from
+    source: str
+    sha256: str
     loaded_at: str
-    from_cache: bool
-    errors: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self._doc_tf = []
@@ -102,10 +95,9 @@ class Catalogue:
     def info(self) -> dict:
         return {
             "source": self.source,
+            "sha256": self.sha256,
             "loaded_at": self.loaded_at,
             "strategy_count": len(self.strategies),
-            "from_cache": self.from_cache,
-            "errors": self.errors,
         }
 
     def get(self, name: str) -> Strategy | None:
@@ -157,33 +149,17 @@ def _parse_csv(text: str) -> list[Strategy]:
     return strategies
 
 
-def _fetch() -> tuple[str, bool, list[str]]:
-    """Fetch the CSV from GitHub, falling back to the last cached copy if the fetch fails."""
-    try:
-        response = httpx.get(CSV_URL, timeout=10.0, follow_redirects=True)
-        response.raise_for_status()
-        CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
-        CACHE_FILE.write_text(response.text)
-        return response.text, False, []
-    except httpx.HTTPError as error:
-        errors = [f"fetch failed ({type(error).__name__}): {error}"]
-        if CACHE_FILE.exists():
-            return CACHE_FILE.read_text(), True, errors
-        raise RuntimeError(f"Could not fetch {CSV_URL} and no cached copy exists at {CACHE_FILE}. {errors}")
-
-
-def load() -> Catalogue:
-    """Read the CSV that ships in this repo; fetch from GitHub only if RDOT_CSV_REF is set or the tool has been
-    copied out of the repo."""
-    if CSV_REF is None and LOCAL_CSV.exists():
-        text, source, from_cache, errors = LOCAL_CSV.read_text(), str(LOCAL_CSV), False, []
-    else:
-        text, from_cache, errors = _fetch()
-        source = CSV_URL
+def load(path: Path = CSV_FILE) -> Catalogue:
+    """Read the catalogue CSV from local disk (by default the copy shipped in this repo)."""
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"RDOT catalogue not found at {path}. Run the server from a checkout of the uncertainty_strategies repo, "
+            "or set RDOT_CSV_PATH to a local copy of strategies_uncertainty_latest.csv."
+        )
+    data = path.read_bytes()
     return Catalogue(
-        strategies=_parse_csv(text),
-        source=source,
+        strategies=_parse_csv(data.decode("utf-8-sig")),
+        source=str(path),
+        sha256=hashlib.sha256(data).hexdigest(),
         loaded_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        from_cache=from_cache,
-        errors=errors,
     )

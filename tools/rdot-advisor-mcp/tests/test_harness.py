@@ -48,15 +48,14 @@ async def test_list_strategies_matches_catalogue_count():
 async def test_catalogue_info_sane():
     info = await _call("catalogue_info")
     assert info["strategy_count"] > 50  # the public CSV has ~111 rows; a generous floor
-    assert info["source"]
+    assert info["source"] == str(catalogue.CSV_FILE)
+    assert len(info["sha256"]) == 64
     assert info["loaded_at"]
 
 
-@pytest.mark.skipif(not catalogue.LOCAL_CSV.exists() or catalogue.CSV_REF, reason="only inside the repo checkout")
-async def test_reads_the_csv_shipped_in_the_repo():
-    info = await _call("catalogue_info")
-    assert info["source"] == str(catalogue.LOCAL_CSV)
-    assert not info["from_cache"]
+async def test_missing_catalogue_fails_with_clear_message(tmp_path):
+    with pytest.raises(FileNotFoundError, match="RDOT_CSV_PATH"):
+        catalogue.load(tmp_path / "missing.csv")
 
 
 @pytest.mark.skipif(not os.environ.get("ANTHROPIC_API_KEY"), reason="requires ANTHROPIC_API_KEY (test-only)")

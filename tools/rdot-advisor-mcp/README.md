@@ -1,10 +1,21 @@
 # RDOT Advisor — MCP server (tool/data only)
 
-Exposes the public [RDOT](https://github.com/sashagutfraind/uncertainty_strategies) strategy catalogue through
-MCP tools, so an AI coding agent (VS Code, Kiro, or anything else that speaks MCP) can look up risk-reducing
-strategies while reviewing an architecture, system design, or code, and cite them by name.
+Exposes the public [RDOT](https://github.com/sashagutfraind/uncertainty_strategies) strategy catalogue through MCP tools,
+enabling easier use across usage scenarios, e.g.
+- a human with AI coding agent (VS Code, Kiro, or anything else that speaks MCP) receives design improvements
+- a fully autonomous AI coding agent consults with RDOT advisor and continues to build the solution
+- a human designing physical (non-software, e.g. structural, electrical etc) system submits the design to the MCP server
 
-In future work we will support remote execution and a containerized MCP server
+## Known limits
+- **Advisor is generic, not domain specific** - you are best to apply other techniques specific to your domain
+- **This server does no reasoning of its own and needs no model credentials.** The connecting client's model
+  reads the catalogue through these tools and writes the advice. "Recommend only RDOT strategies" is therefore
+  enforced by the server's `instructions` and tool descriptions alone: a host model can still ignore them.
+- **Search is lexical, not semantic.** `search_strategies` is BM25 over the catalogue text. On 34 labeled
+  issue queries it puts a fitting strategy in the top 10 for 23 of them. Engineers describe problems ("race
+  condition") while the catalogue describes strategies in abstract terms, and no score cutoff separates relevant
+  from irrelevant results ("write a poem about cats" outscores many real queries). That is why the instructions
+  send host models to `list_strategies` first; the catalogue is small enough to read whole.
 
 ## Setup
 
@@ -73,33 +84,20 @@ Kiro reconnects automatically when you save the file. Check Kiro's MCP Logs (Out
 | `list_strategies()` | The whole catalogue: every strategy's name, category and definition (about 5K tokens). The recommended first call, so the host model matches problems to strategies by meaning |
 | `get_strategy(name)` | One strategy's full entry (definition, category, examples, related/aliases, references) |
 | `search_strategies(query, limit=10)` | Keyword (BM25) shortcut with a relevance score per result; misses strategies described in different words than the query |
-| `catalogue_info()` | Which copy of the catalogue is loaded: source file or URL, load time, strategy count, and whether a failed fetch fell back to a cached copy |
+| `catalogue_info()` | Which copy of the catalogue is loaded: the CSV file path, its SHA-256, load time and strategy count |
 
 ## Catalogue source
 
-The server reads [`strategies_uncertainty_latest.csv`](../../strategies_uncertainty_latest.csv) from this repo,
-so it needs no network access and the catalogue version is simply the commit you have checked out. Run
-`git pull` to get the latest strategies.
+The server reads [`strategies_uncertainty_latest.csv`](../../strategies_uncertainty_latest.csv) from this repo.
+It makes no network requests and writes no files; the catalogue version is the commit you have checked out, so
+`git pull` gets the latest strategies, after you've had the chance to review them.
 
-To use a different version without changing your checkout, set `RDOT_CSV_REF` to a branch, tag or commit; the
-server then fetches that version from GitHub, caching it in `.cache/` (gitignored) and falling back to the
-cached copy if a later fetch fails. It also fetches from `main` if the tool folder has been copied out of the
-repo.
+To use a different copy of the CSV, for example when running the tool outside this repo, point
+`RDOT_CSV_PATH` at it:
 
 ```bash
-RDOT_CSV_REF=some-commit-sha uv run src/server.py
+RDOT_CSV_PATH=/path/to/strategies_uncertainty_latest.csv uv run src/server.py
 ```
-
-## Known limits
-
-- **This server does no reasoning of its own and needs no model credentials.** The connecting client's model
-  reads the catalogue through these tools and writes the advice. "Recommend only RDOT strategies" is therefore
-  enforced by the server's `instructions` and tool descriptions alone: a host model can still ignore them.
-- **Search is lexical, not semantic.** `search_strategies` is BM25 over the catalogue text. On 34 labeled
-  issue queries it puts a fitting strategy in the top 10 for 23 of them. Engineers describe problems ("race
-  condition") while the catalogue describes strategies in abstract terms, and no score cutoff separates relevant
-  from irrelevant results ("write a poem about cats" outscores many real queries). That is why the instructions
-  send host models to `list_strategies` first; the catalogue is small enough to read whole.
 
 ## Testing
 
